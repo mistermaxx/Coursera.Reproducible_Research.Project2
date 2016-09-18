@@ -38,6 +38,11 @@ stormdata <- function()
   storm.data$propertyDamage <- storm.data$PROPDMG * (10 ** propertyExponent)
   storm.data$cropDamage <- storm.data$CROPDMG * (10 ** cropExponent)
   
+  # subset, sum property damage data
+  property.subset.data <- select(storm.data, EVTYPE, propertyDamage)
+  property.damage.data <- summarize(property.subset.data, propertyDamage = sum(propertyDamage))
+  property.data <- arrange(property.damage.data, desc(propertyDamage))
+  
   # subset, sum injuries by event type
   injury.subset.data <- select(storm.data, EVTYPE, INJURIES) # subset down to just event type, injuries
   injury.data <- summarize(injury.subset.data, INJURIES = sum(INJURIES)) # sum the injuries by event type
@@ -45,7 +50,7 @@ stormdata <- function()
   
   # graph injury plot
   p1ot.injury.data <- ggplot(data = head(injury.data,10), aes(x = reorder(EVTYPE, INJURIES), y = INJURIES))
-  p1ot.injury.data + geom_bar(fill = "steelblue1", stat = "identity") + coord_flip() + ylab("Total number of injuries") + xlab("Event type") + ggtitle("Health impact of weather events in the US - Top 10") + theme(legend.position = "none")
+  p1ot.injury.data + geom_bar(fill = EVTYPE, stat = "identity") + coord_flip() + ylab("Total number of injuries") + xlab("Event type") + ggtitle("Health impact of weather events in the US - Top 10") + theme(legend.position = "none")
   
   # subset, sum fatalities by event type
   fatality.subset.data <- select(storm.data, EVTYPE, FATALITIES)
