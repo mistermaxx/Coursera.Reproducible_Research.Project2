@@ -4,6 +4,7 @@ author: "Dwayne Macadangdang"
 date: "September 18, 2016"
 output: html_document
 ---
+![](katrina.jpg)
 
 #After The Storm: The Human Toll of Extreme Weather Events in the United States
 ## A summary of injuries, fatalities, property and crop damage caused by extreme weather from 1950 to 2011.
