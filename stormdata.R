@@ -43,6 +43,11 @@ stormdata <- function()
   property.damage.data <- summarize(property.subset.data, propertyDamage = sum(propertyDamage))
   property.data <- arrange(property.damage.data, desc(propertyDamage))
   
+  # subset, sum crop damage data
+  crop.subset.data <- select(storm.data, EVTYPE, cropDamage)
+  crop.damage.data <- summarize(crop.subset.data, cropDamage = sum(cropDamage))
+  crop.data <- arrange(crop.damage.data, desc(cropDamage))
+  
   # subset, sum injuries by event type
   injury.subset.data <- select(storm.data, EVTYPE, INJURIES) # subset down to just event type, injuries
   injury.data <- summarize(injury.subset.data, INJURIES = sum(INJURIES)) # sum the injuries by event type
