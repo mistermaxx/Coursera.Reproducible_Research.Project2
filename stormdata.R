@@ -1,0 +1,39 @@
+# |*****************************************************************************
+# | Dwayne Macadangdang 9/17/2016
+# | Coursera: Exploratory Data Analysis
+# | Week 4 Programming Assignment 2
+
+stormdata <- function()
+{
+  
+  # working directory
+  setwd("/Users/mistermaxx/Documents/work/personal/Coursera/Repro_Res/")
+  
+  # reference depedencies
+  library(dplyr)
+  library(ggplot2)
+  library(lattice)
+  library(lubridate)
+  
+  # getExponent function definition: return numeric value based on string value passed in
+  # uses switch() and tolower() functions
+  getExponent <- function(value)
+  {
+    switch(tolower(value), "h" = {2}, "k" = {3}, "m" = {6}, "b" = {9}, {0})
+  }
+  
+  # decompress bzip archive, read data from file
+  storm.file.data <- read.csv(bzfile("repdata-data-StormData.csv.bz2"))
+  
+  # subset data: required columns
+  storm.data <- select(storm.file.data, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
+  
+  # get exponents for property and crop damage
+  propertyExponent <- sapply(storm.data$PROPDMGEXP, FUN = getExponent)
+  cropExponent <- sapply(storm.data$CROPDMGEXP, FUN = getExponent)
+  
+  # calculate values for property and crop damage
+  storm.data$propertyDamage <- storm.data$PROPDMG * (10 ** propertyExponent)
+  storm.data$cropDamage <- storm.data$CROPDMG * (10 ** cropExponent)
+  
+  }
