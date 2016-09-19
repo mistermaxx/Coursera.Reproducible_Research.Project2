@@ -1,6 +1,6 @@
 # |*****************************************************************************
-# | Dwayne Macadangdang 9/17/2016
-# | Coursera: Exploratory Data Analysis
+# | Dwayne Macadangdang 9/19/2016
+# | Coursera: Reproducible Research
 # | Week 4 Programming Assignment 2
 
 stormdata <- function()
@@ -56,7 +56,6 @@ stormdata <- function()
   plot.fatality.data <- ggplot(data = head(fatality.data,10), aes(x = reorder(EVTYPE, FATALITIES), y = FATALITIES))
   fatality.graph <- plot.fatality.data + geom_bar(fill = "darkcyan", stat = "identity") + coord_flip() + ylab("Total Fatalities") + xlab("Event Type") + theme(legend.position = "none")
   
-  #multiplot(injury.graph, fatality.graph)
   grid.arrange(injury.graph, fatality.graph)
   
   # subset, sum property damage data
@@ -77,6 +76,5 @@ stormdata <- function()
   plot.crop.data <- ggplot(data = head(crop.damage.data, 10), aes(x = reorder(EVTYPE, cropDamage), y = log10(cropDamage), fill = cropDamage)) 
   crop.graph <- plot.crop.data + geom_bar(fill = "darksalmon", stat = "identity") + coord_flip() + xlab("Event Type") + ylab("Crop Damage in Dollars (Billions)") + theme(legend.position="none")
   
-  #multiplot(property.graph, crop.graph)
   grid.arrange(property.graph, crop.graph)
 }
