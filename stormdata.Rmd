@@ -1,13 +1,10 @@
----
-title: "Storm Data"
-author: "Dwayne Macadangdang"
-date: "September 18, 2016"
-output: html_document
----
-![](katrina.jpg)
-
 #After The Storm: The Human Toll of Extreme Weather Events in the United States
+
+![](tornado.jpg)
+
 ## A summary of injuries, fatalities, property and crop damage caused by extreme weather from 1950 to 2011.
+
+### By Dwayne Macadangdang | September 19, 2016
 
 ##Synopsis
 This document summarizes the analysis of the data contained in the Storm Data database maintained by the NOAA (National Oceanic and Atmospheric Administration). The database records "the occurrence of storms and other significant weather phenomena having sufficient intensity to cause loss of life, injuries, significant property damage, and/or disruption to commerce". The objective of this report was to determine:
@@ -15,77 +12,131 @@ This document summarizes the analysis of the data contained in the Storm Data da
 * Across the United States, which types of events are most harmful with respect to population health?
 * Across the United States, which types of events have the greatest economic consequences?
 
+This data analysis and report was created for the Coursera Reproducible Research MOOC (Massive Open Online Class), which is part of the Data Science Specialization. The objective of this assignment was to explore the NOAA Storm Database and determine the effects of extreme weather events, both in human and economic terms.
+
 ##Data Processing
-
-
-```{r, echo = TRUE, eval = TRUE}
-  setwd("/Users/mistermaxx/Documents/work/personal/Coursera/Repro_Res/")
-```
-  
+To begin, we reference the necessary R packages.
 ```{r, echo = TRUE, eval = TRUE}
   library(dplyr)
   library(ggplot2)
-  library(lattice)
+  library(gridExtra)
+  library(grid)
+```
+
+We first set the working directory.
+```{r, echo = TRUE, eval = TRUE}
+  setwd("/Users/mistermaxx/Documents/work/personal/Coursera/Repro_Res/Project2")
 ```
   
-  
+A brief custom function was written to return a numeric exponent value based on the string value passed in. The switch() function was favored for simplicity, and the tolower() function was employed to handle upper case characters.
 ```{r, echo = TRUE, eval = TRUE}
-  # getExponent function definition: return numeric value based on string value passed in
-  # uses switch() and tolower() functions
   getExponent <- function(value)
   {
     switch(tolower(value), "h" = {2}, "k" = {3}, "m" = {6}, "b" = {9}, {0})
   }
 ```
-  
+
+The options() function was used to display actual numbers in plots instead of scientific notation.
 ```{r, echo = TRUE, eval = TRUE}
-  storm.file.data <- read.csv(bzfile("repdata-data-StormData.csv.bz2"))
+  options("scipen" = 10)
 ```
 
+The data, which is quite large, is read from the compressed file and persisted to a variable.
+```{r, echo = TRUE, eval = TRUE}
+  storm.file.data <- read.csv(bzfile("StormData.csv.bz2"))
+```
+
+A subset of the file data is created, containing only those columns needed for plotting. The dplyr package is used because of it's similarity to working with SQL tables.
 ```{r, echo = TRUE, eval = TRUE}
   storm.data <- select(storm.file.data, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
 ```
 
+The sapply() function is used to loop the getExponent() function, creating numeric vectors of the exponent values
 ```{r, echo = TRUE, eval = TRUE}
   propertyExponent <- sapply(storm.data$PROPDMGEXP, FUN = getExponent)
   cropExponent <- sapply(storm.data$CROPDMGEXP, FUN = getExponent)
 ```
   
+The property and crop damage dollar values are calculated.
 ```{r, echo = TRUE, eval = TRUE}
   # calculate values for property and crop damage
   storm.data$propertyDamage <- storm.data$PROPDMG * (10 ** propertyExponent)
   storm.data$cropDamage <- storm.data$CROPDMG * (10 ** cropExponent)
 ```
 
+##Results
+For each set of data to be plotted, the data is subset to only the event type and health/property impact category. Once the data was prepared, the ggplot2 package was used to build the graphs.
+
+The injury and fatality data is subset, grouped, aggregated, ordered, and plotted. 
 ```{r, echo = TRUE, eval = TRUE}
-  # subset, sum property damage data
-  property.subset.data <- select(storm.data, EVTYPE, propertyDamage)
-  property.damage.data <- summarize(property.subset.data, propertyDamage = sum(propertyDamage))
-  property.data <- arrange(property.damage.data, desc(propertyDamage))
+  injury.subset.data <- select(storm.data, EVTYPE, INJURIES) 
+  injury.subset.data <- group_by(injury.subset.data, EVTYPE, INJURIES)
+  injury.data <- aggregate(INJURIES ~ EVTYPE, data = injury.subset.data, sum) 
+  injury.data <- arrange(injury.data, desc(INJURIES)) 
   
-  # subset, sum crop damage data
-  crop.subset.data <- select(storm.data, EVTYPE, cropDamage)
-  crop.damage.data <- summarize(crop.subset.data, cropDamage = sum(cropDamage))
-  crop.data <- arrange(crop.damage.data, desc(cropDamage))
-  
-  # subset, sum injuries by event type
-  injury.subset.data <- select(storm.data, EVTYPE, INJURIES) # subset down to just event type, injuries
-  injury.data <- summarize(injury.subset.data, INJURIES = sum(INJURIES)) # sum the injuries by event type
-  injury.data <- arrange(injury.data, desc(INJURIES)) # arrange injury totals in descending order
+  # graph injury plot
+  p1ot.injury.data <- ggplot(data = head(injury.data,10), aes(x = reorder(EVTYPE, INJURIES), y = INJURIES))
+  injury.graph <- p1ot.injury.data + geom_bar(fill = "powderblue", stat = "identity") + coord_flip() + ylab("Total number of injuries") + xlab("Event type") + ggtitle("Health impact of weather events in the US - Top 10") + theme(legend.position = "none")
   
   # subset, sum fatalities by event type
   fatality.subset.data <- select(storm.data, EVTYPE, FATALITIES)
-  fatality.data <- summarize(fatality.subset.data, FATALITIES = sum(FATALITIES))
+  fatality.subset.data <- group_by(fatality.subset.data, EVTYPE, FATALITIES)
+  fatality.data <- aggregate(FATALITIES ~ EVTYPE, data = fatality.subset.data, sum)
   fatality.data <- arrange(fatality.data, desc(FATALITIES))
-```
-
-```{r, echo = TRUE, eval = TRUE}
-  # graph injury plot
-  p1ot.injury.data <- ggplot(data = head(injury.data,10), aes(x = reorder(EVTYPE, INJURIES), y = INJURIES))
-  p1ot.injury.data + geom_bar(fill = EVTYPE, stat = "identity") + coord_flip() + ylab("Total number of injuries") + xlab("Event type") + ggtitle("Health impact of weather events in the US - Top 10") + theme(legend.position = "none")
   
   # graph fatality plot
   plot.fatality.data <- ggplot(data = head(fatality.data,10), aes(x = reorder(EVTYPE, FATALITIES), y = FATALITIES))
-  plot.fatality.data + geom_bar(fill = "darkcyan", stat = "identity") + coord_flip() + ylab("Total Fatalities") + xlab("Event Type") + theme(legend.position = "none")
+  fatality.graph <- plot.fatality.data + geom_bar(fill = "darkcyan", stat = "identity") + coord_flip() + ylab("Total Fatalities") + xlab("Event Type") + theme(legend.position = "none")
 ```
 
+A review of the data tables and plots reveal that the extreme weather event with the highest impact on both injuries and fatalities from 1959 to 2011 were tornados. 
+```{r, echo = TRUE, eval = TRUE}
+head(injury.data,10)
+```
+
+```{r, echo = TRUE, eval = TRUE}
+head(fatality.data,10)
+```
+
+```{r, echo = TRUE, eval = TRUE}
+  grid.arrange(injury.graph, fatality.graph)
+```
+
+The property and crop damage data are aggregated, ordered and plotted.
+```{r, echo = TRUE, eval = TRUE}
+  # subset, sum property damage data
+  property.subset.data <- select(storm.data, EVTYPE, propertyDamage)
+  property.subset.data <- group_by(property.subset.data, EVTYPE, propertyDamage)
+  property.damage.data <- aggregate(propertyDamage ~ EVTYPE, data = property.subset.data, sum)
+  property.damage.data <- arrange(property.damage.data, desc(propertyDamage))
+  
+  # graph property damage plot
+  plot.property.data <- ggplot(data = head(property.damage.data, 10), aes(x = reorder(EVTYPE, propertyDamage), y = propertyDamage, fill = propertyDamage )) 
+  property.graph <- plot.property.data + geom_bar(fill = "mediumturquoise", stat = "identity") + coord_flip() + xlab("Event Type") + ylab("Property Damage in Dollars (Hundred Billions)") + ggtitle("Economic Impact of Extreme Weather Events in the US: Top 10") + theme(plot.title = element_text(hjust = 0)) 
+  
+  # subset, sum crop damage data
+  crop.subset.data <- select(storm.data, EVTYPE, cropDamage)
+  crop.subset.data <- group_by(crop.subset.data, EVTYPE, cropDamage)
+  crop.damage.data <- aggregate(cropDamage ~ EVTYPE, data = crop.subset.data, sum)
+  crop.damage.data <- arrange(crop.damage.data, desc(cropDamage))
+  
+  # graph crop damage plot
+  plot.crop.data <- ggplot(data = head(crop.damage.data, 10), aes(x = reorder(EVTYPE, cropDamage), y = cropDamage, fill = cropDamage)) 
+  crop.graph <- plot.crop.data + geom_bar(fill = "darksalmon", stat = "identity") + coord_flip() + xlab("Event Type") + ylab("Crop Damage in Dollars (Billions)") + theme(legend.position="none") 
+```
+
+In terms of financial impact to property, the most damaging event to property from 1950 to 2011 was floods at a staggering $144,657,709,807
+```{r, echo = TRUE, eval = TRUE}
+head(property.damage.data, 10)
+```
+
+The most financially damaging event to crops during the same period was drought at $13,972,566,000
+```{r, echo = TRUE, eval = TRUE}
+head(crop.damage.data, 10)
+```
+
+```{r, echo = TRUE, eval = TRUE}
+  grid.arrange(property.graph, crop.graph, ncol = 1, nrow = 2)
+```
+
+Of course, the numbers visualized here don't begin to tell the story, and fail to put a human face on the terrible human suffering resulting from these extremem weather events.
